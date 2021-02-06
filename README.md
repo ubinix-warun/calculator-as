@@ -1,7 +1,7 @@
-Token Contract in AssemblyScript
+Calculator in AssemblyScript
 ================================
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/near-examples/token-contract-as)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/ubinix-warun/calculator-as)
 
 <!-- MAGIC COMMENT: DO NOT DELETE! Everything above this line is hidden on NEAR Examples page -->
 
