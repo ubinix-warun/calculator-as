@@ -1,12 +1,12 @@
 import { context, storage, logging, ContractPromise } from "near-sdk-as";
 import { AddArgs } from "./model";
 
-const OTHER_CONTRACT = "dev-1612581803817-6385186";
+const OTHER_CONTRACT = "dev-1612586966233-9231620";
 
 export class CalculatorApi {
   add(a: string, b: string): ContractPromise {
     let args: AddArgs = { a, b };
-    let promise = ContractPromise.create(OTHER_CONTRACT, "addLongNumbers", args.encode(), 100000000000000);
+    let promise = ContractPromise.create(OTHER_CONTRACT, "addLongNumbers", args.encode(), 10_000_000_000_000);
     logging.log("OTHER_CONTRACT: " + "(" + OTHER_CONTRACT + ")")
     return promise;
   }
