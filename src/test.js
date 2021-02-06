@@ -1,67 +1,83 @@
-describe('Token', function() {
+describe("Calculator", function() {
   let near;
   let contract;
   let alice;
-  let bob = 'bob.near';
-  let eve = 'eve.near';
-
+  let bob = "bob.near";
+  let eve = "eve.near";
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-  beforeAll(async function() {
-    console.log('nearConfig', nearConfig);
-    near = await nearlib.connect(nearConfig);
-    alice = nearConfig.contractName;
-    contract = await near.loadContract(nearConfig.contractName, {
-      // NOTE: This configuration only needed while NEAR is still in development
-      viewMethods: ['totalSupply', 'balanceOf', 'allowance'],
-      changeMethods: ['init', 'transfer', 'approve', 'transferFrom'],
-      sender: alice
+  // Common setup below
+  beforeAll(async function () {
+    near = await nearAPI.connect(nearConfig);
+    accountId = nearConfig.contractName;
+    contract = await near.loadContract(accountId, {
+      // View methods are read only. They don't modify the state, but usually return some value.
+      viewMethods: [],
+      // Change methods can modify the state. But you don't receive the returned value when called.
+      changeMethods: ["addLongNumbers"],
+      sender: nearConfig.contractName
     });
+    window.near = near;
   });
 
-  describe('with alice as initial owner', function() {
+  // Multiple tests can be described below. Search Jasmine JS for documentation.
+  describe("simple", function() {
     beforeAll(async function() {
-      await contract.init({ initialOwner: alice });
-
-      const aliceStartBalance = await contract.balanceOf({tokenOwner: alice});
-      expect(aliceStartBalance).toBe('1000000');
+    // There can be some common setup for each test.
     });
 
-    it('can transfer to other account', async function() {
-      const aliceStartBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobStartBalance = await contract.balanceOf({tokenOwner: bob});
-
-      await contract.transfer({ to: bob, tokens: '100' });
-
-      const aliceEndBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobEndBalance = await contract.balanceOf({tokenOwner: bob});
-      expect(parseInt(aliceEndBalance)).toBe(parseInt(aliceStartBalance) - 100);
-      expect(parseInt(bobEndBalance)).toBe(parseInt(bobStartBalance) + 100);
+    it("adds one digit", async function() {
+      const params = {
+        a: "1",
+        b: "3"
+      };
+      const result = await contract.addLongNumbers(params);
+      expect(result).toBe("4");
     });
 
-    it('can transfer from approved account to another account', async function() {
-      const aliceStartBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobStartBalance = await contract.balanceOf({tokenOwner: bob});
-      const eveStartBalance = await contract.balanceOf({tokenOwner: eve});
+    it("should work with first string longer", async function() {
+      const params = {
+        a: "10",
+        b: "3"
+      };
+      const result = await contract.addLongNumbers(params);
+      expect(result).toBe("13");
+    });
 
-      await contract.approve({ spender: eve, tokens: '100' });
+    it("should work with second string longer", async function() {
+      const params = {
+        a: "4",
+        b: "15"
+      };
+      const result = await contract.addLongNumbers(params);
+      expect(result).toBe("19");
+    });
 
-      const aliceMidBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobMidBalance = await contract.balanceOf({tokenOwner: bob});
-      const eveMidBalance = await contract.balanceOf({tokenOwner: eve});
-      expect(aliceMidBalance).toBe(aliceStartBalance);
-      expect(bobMidBalance).toBe(bobStartBalance);
-      expect(eveMidBalance).toBe(eveStartBalance);
+    it("should work with carry", async function() {
+      const params = {
+        a: "19",
+        b: "22"
+      };
+      const result = await contract.addLongNumbers(params);
+      expect(result).toBe("41");
+    });
 
-      // TODO: Use "eve" as sender
-      await contract.transferFrom({ from: alice, to: eve, tokens: '50' });
+    it("should work when result is one digit longer than largest input", async function() {
+      const params = {
+        a: "91",
+        b: "22"
+      };
+      const result = await contract.addLongNumbers(params);
+      expect(result).toBe("113");
+    });
 
-      const aliceEndBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobEndBalance = await contract.balanceOf({tokenOwner: bob});
-      const eveEndBalance = await contract.balanceOf({tokenOwner: eve});
-      expect(parseInt(aliceEndBalance)).toBe(parseInt(aliceStartBalance) - 50);
-      expect(bobEndBalance).toBe(bobStartBalance);
-      expect(parseInt(eveEndBalance)).toBe(parseInt(eveStartBalance) + 50);
+    it("should work with really large input", async function() {
+      const params = {
+        a: "29348756231984613809465238956138947136497182364018246710289467102946710289467198046",
+        b: "1"
+      };
+      const result = await contract.addLongNumbers(params);
+      expect(result).toBe("29348756231984613809465238956138947136497182364018246710289467102946710289467198047");
     });
   });
 });

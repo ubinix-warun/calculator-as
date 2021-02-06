@@ -1,67 +1,49 @@
-// @nearfile
-import { context, storage, logging, PersistentMap } from "near-sdk-as";
+import { context, storage, logging } from "near-sdk-as";
 
-// --- contract code goes below
+export function addLongNumbers(a: string, b: string): string {
+  // sends logs to the terminal of the contract placing call and the Near Explorer
+  logging.log("-------------------------------------------------------")
+  logging.log('Contract Called : ' + context.contractName)
+  logging.log('Contract Signer : ' + context.predecessor)
+  logging.log("- - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+  logging.log("Caculating : " + a + " + " + b)
+  // Similar to long addition by hand, we start with the least significant digits first
+  const aReversed = a.split("").reverse();
+  const bReversed = b.split("").reverse();
 
-const balances = new PersistentMap<string, u64>("b:");
-const approves = new PersistentMap<string, u64>("a:");
+  // We initialize our resultant variable to be one more than the largest number's length
+  const maxLength = max(a.length, b.length);
+  let resultArray = new Array<String | null>(maxLength + 1);
+  let result = "";
+  let carry = 0;
 
-const TOTAL_SUPPLY: u64 = 1000000;
-export function init(initialOwner: string): void {
-  logging.log("initialOwner: " + initialOwner);
-  assert(storage.get<string>("init") == null, "Already initialized token supply");
-  balances.set(initialOwner, TOTAL_SUPPLY);
-  storage.set("init", "done");
-}
+  // Loop through each digit adding the value to the other number, if it exists
+  for (let i = 0; i < maxLength; ++i) {
+    let aDigit = (i < a.length) ? U32.parseInt(aReversed[i]) : 0;
+    let bDigit = (i < b.length) ? U32.parseInt(bReversed[i]) : 0;
+    let digitSum = aDigit + bDigit + carry;
 
-export function totalSupply(): string {
-  return TOTAL_SUPPLY.toString();
-}
+    // Keep track of the carry amount
+    if (digitSum >= 10) {
+      carry = 1;
+      digitSum -= 10;
+    } else {
+      carry = 0;
+    }
 
-export function balanceOf(tokenOwner: string): u64 {
-  logging.log("balanceOf: " + tokenOwner);
-  if (!balances.contains(tokenOwner)) {
-    return 0;
+    resultArray[i] = digitSum.toString();
   }
-  const result = balances.getSome(tokenOwner);
-  return result;
-}
 
-export function allowance(tokenOwner: string, spender: string): u64 {
-  const key = tokenOwner + ":" + spender;
-  if (!approves.contains(key)) {
-    return 0;
+  // If the final addition has a carry, add it to the extra slot we initialized for it
+  if (carry > 0) {
+    resultArray[maxLength] = carry.toString();
   }
-  return approves.getSome(key);
-}
 
-export function transfer(to: string, tokens: u64): boolean {
-  logging.log("transfer from: " + context.sender + " to: " + to + " tokens: " + tokens.toString());
-  const fromAmount = getBalance(context.sender);
-  assert(fromAmount >= tokens, "not enough tokens on account");
-  assert(getBalance(to) <= getBalance(to) + tokens,"overflow at the receiver side");
-  balances.set(context.sender, fromAmount - tokens);
-  balances.set(to, getBalance(to) + tokens);
-  return true;
-}
+  // Reverse again and combine the values for the final result
+  let reversedResultArray = resultArray.reverse();
 
-export function approve(spender: string, tokens: u64): boolean {
-  logging.log("approve: " + spender + " tokens: " + tokens.toString());
-  approves.set(context.sender + ":" + spender, tokens);
-  return true;
-}
-
-export function transferFrom(from: string, to: string, tokens: u64): boolean {
-  const fromAmount = getBalance(from);
-  assert(fromAmount >= tokens, "not enough tokens on account");
-  const approvedAmount = allowance(from, to);
-  assert(tokens <= approvedAmount, "not enough tokens approved to transfer");
-  assert(getBalance(to) <= getBalance(to) + tokens,"overflow at the receiver side");
-  balances.set(from, fromAmount - tokens);
-  balances.set(to, getBalance(to) + tokens);
-  return true;
-}
-
-function getBalance(owner: string): u64 {
-  return balances.contains(owner) ? balances.getSome(owner) : 0;
+  // More terminal / Near Explorer logs
+  logging.log(">>> RESULT : " + reversedResultArray.join(""))
+  logging.log("-------------------------------------------------------")
+  return reversedResultArray.join("");
 }
