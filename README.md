@@ -3,12 +3,10 @@ Calculator in AssemblyScript
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/ubinix-warun/calculator-as)
 
-<!-- MAGIC COMMENT: DO NOT DELETE! Everything above this line is hidden on NEAR Examples page -->
+- [Callee!](https://github.com/ubinix-warun/calculator-as/tree/callee) - "Calculator Contract"
+- [Caller!](https://github.com/ubinix-warun/calculator-as/tree/caller) - "Cross-call api to Cal."
 
-This project contains an implementation of a token contract similar to [ERC20](https://theethereum.wiki/w/index.php/ERC20_Token_Standard) but simpler. We'll visit a page, sign in and use your browser's console to run commands to initialize, send, and get the balance of a custom token.
-
-**Note**: this example uses a basic version of a token. It is not the supported token contract laid out in the [NEAR Enhancement Proposal for non-fungible tokens](https://github.com/nearprotocol/NEPs/pull/4).
-Visit [this example](https://github.com/near-examples/NFT) illustrating implementations of the non-fungible token in Rust and AssemblyScript. It is not recommended to deploy non-fungible tokens written in AssemblyScript for financial use cases.
+![IMG](https://raw.githubusercontent.com/ubinix-warun/calculator-as/master/assets/Selection_146.png) 
 
 
 Getting started
