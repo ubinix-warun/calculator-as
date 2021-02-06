@@ -1,67 +1,45 @@
-describe('Token', function() {
+const getConfig = require('./config');
+let nearConfig = getConfig("development");
+require('dotenv').config({ path: '/workspace/calculator-as/neardev/dev-account.env' })
+
+describe("CalculatorAPI", function() {
   let near;
   let contract;
-  let alice;
-  let bob = 'bob.near';
-  let eve = 'eve.near';
-
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-  beforeAll(async function() {
-    console.log('nearConfig', nearConfig);
-    near = await nearlib.connect(nearConfig);
-    alice = nearConfig.contractName;
-    contract = await near.loadContract(nearConfig.contractName, {
-      // NOTE: This configuration only needed while NEAR is still in development
-      viewMethods: ['totalSupply', 'balanceOf', 'allowance'],
-      changeMethods: ['init', 'transfer', 'approve', 'transferFrom'],
-      sender: alice
+  // Common setup below
+  beforeAll(async function () {
+    near = await nearAPI.connect({
+    deps: {
+     keyStore: new nearAPI.keyStores.UnencryptedFileSystemKeyStore('../../../home/gitpod/.near-credentials')
+    },
+    ...nearConfig
+  })
+    accountId = process.env.CONTRACT_NAME;
+    contract = await near.loadContract(accountId, {
+    // NOTE: This configuration only needed while NEAR is still in development
+    // View methods are read only. They don't modify the state, but usually return some value.
+    viewMethods: [],
+    // Change methods can modify the state. But you don't receive the returned value when called.
+    changeMethods: ["calculate", "addLongNumbers"],
+    sender: process.env.CONTRACT_NAME
     });
   });
 
-  describe('with alice as initial owner', function() {
+  // Multiple tests can be described below. Search Jasmine JS for documentation.
+  describe("simple", function() {
     beforeAll(async function() {
-      await contract.init({ initialOwner: alice });
-
-      const aliceStartBalance = await contract.balanceOf({tokenOwner: alice});
-      expect(aliceStartBalance).toBe('1000000');
+    // There can be some common setup for each test.
     });
 
-    it('can transfer to other account', async function() {
-      const aliceStartBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobStartBalance = await contract.balanceOf({tokenOwner: bob});
+    it("add one digit", async function() {
+      const params = {
+        a: "1",
+        b: "99"
+      };
 
-      await contract.transfer({ to: bob, tokens: '100' });
-
-      const aliceEndBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobEndBalance = await contract.balanceOf({tokenOwner: bob});
-      expect(parseInt(aliceEndBalance)).toBe(parseInt(aliceStartBalance) - 100);
-      expect(parseInt(bobEndBalance)).toBe(parseInt(bobStartBalance) + 100);
-    });
-
-    it('can transfer from approved account to another account', async function() {
-      const aliceStartBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobStartBalance = await contract.balanceOf({tokenOwner: bob});
-      const eveStartBalance = await contract.balanceOf({tokenOwner: eve});
-
-      await contract.approve({ spender: eve, tokens: '100' });
-
-      const aliceMidBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobMidBalance = await contract.balanceOf({tokenOwner: bob});
-      const eveMidBalance = await contract.balanceOf({tokenOwner: eve});
-      expect(aliceMidBalance).toBe(aliceStartBalance);
-      expect(bobMidBalance).toBe(bobStartBalance);
-      expect(eveMidBalance).toBe(eveStartBalance);
-
-      // TODO: Use "eve" as sender
-      await contract.transferFrom({ from: alice, to: eve, tokens: '50' });
-
-      const aliceEndBalance = await contract.balanceOf({tokenOwner: alice});
-      const bobEndBalance = await contract.balanceOf({tokenOwner: bob});
-      const eveEndBalance = await contract.balanceOf({tokenOwner: eve});
-      expect(parseInt(aliceEndBalance)).toBe(parseInt(aliceStartBalance) - 50);
-      expect(bobEndBalance).toBe(bobStartBalance);
-      expect(parseInt(eveEndBalance)).toBe(parseInt(eveStartBalance) + 50);
+      const result = await contract.calculate(params);
+      expect(result).toBe("100");
     });
   });
 });

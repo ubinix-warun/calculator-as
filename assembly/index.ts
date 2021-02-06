@@ -1,67 +1,19 @@
-// @nearfile
-import { context, storage, logging, PersistentMap } from "near-sdk-as";
+import { context, storage, logging, ContractPromise } from "near-sdk-as";
+import { AddArgs } from "./model";
 
-// --- contract code goes below
+const OTHER_CONTRACT = "dev-1612581803817-6385186";
 
-const balances = new PersistentMap<string, u64>("b:");
-const approves = new PersistentMap<string, u64>("a:");
-
-const TOTAL_SUPPLY: u64 = 1000000;
-export function init(initialOwner: string): void {
-  logging.log("initialOwner: " + initialOwner);
-  assert(storage.get<string>("init") == null, "Already initialized token supply");
-  balances.set(initialOwner, TOTAL_SUPPLY);
-  storage.set("init", "done");
-}
-
-export function totalSupply(): string {
-  return TOTAL_SUPPLY.toString();
-}
-
-export function balanceOf(tokenOwner: string): u64 {
-  logging.log("balanceOf: " + tokenOwner);
-  if (!balances.contains(tokenOwner)) {
-    return 0;
+export class CalculatorApi {
+  add(a: string, b: string): ContractPromise {
+    let args: AddArgs = { a, b };
+    let promise = ContractPromise.create(OTHER_CONTRACT, "addLongNumbers", args.encode(), 100000000000000);
+    logging.log("OTHER_CONTRACT: " + "(" + OTHER_CONTRACT + ")")
+    return promise;
   }
-  const result = balances.getSome(tokenOwner);
-  return result;
 }
 
-export function allowance(tokenOwner: string, spender: string): u64 {
-  const key = tokenOwner + ":" + spender;
-  if (!approves.contains(key)) {
-    return 0;
-  }
-  return approves.getSome(key);
-}
-
-export function transfer(to: string, tokens: u64): boolean {
-  logging.log("transfer from: " + context.sender + " to: " + to + " tokens: " + tokens.toString());
-  const fromAmount = getBalance(context.sender);
-  assert(fromAmount >= tokens, "not enough tokens on account");
-  assert(getBalance(to) <= getBalance(to) + tokens,"overflow at the receiver side");
-  balances.set(context.sender, fromAmount - tokens);
-  balances.set(to, getBalance(to) + tokens);
-  return true;
-}
-
-export function approve(spender: string, tokens: u64): boolean {
-  logging.log("approve: " + spender + " tokens: " + tokens.toString());
-  approves.set(context.sender + ":" + spender, tokens);
-  return true;
-}
-
-export function transferFrom(from: string, to: string, tokens: u64): boolean {
-  const fromAmount = getBalance(from);
-  assert(fromAmount >= tokens, "not enough tokens on account");
-  const approvedAmount = allowance(from, to);
-  assert(tokens <= approvedAmount, "not enough tokens approved to transfer");
-  assert(getBalance(to) <= getBalance(to) + tokens,"overflow at the receiver side");
-  balances.set(from, fromAmount - tokens);
-  balances.set(to, getBalance(to) + tokens);
-  return true;
-}
-
-function getBalance(owner: string): u64 {
-  return balances.contains(owner) ? balances.getSome(owner) : 0;
+export function calculate(a: string , b: string): void {
+  let calculator = new CalculatorApi();
+  let promise = calculator.add(a, b);
+  promise.returnAsResult();
 }
